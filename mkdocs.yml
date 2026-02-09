@@ -42,6 +42,7 @@ nav:
       - Networking Deep Dive: kubernetes/networking.md
       - Configuration & Secrets: kubernetes/configuration-and-secrets.md
       - Persistent Storage: kubernetes/persistent-storage.md
+      - Redis Integration: kubernetes/redis.md
       - Horizontal Pod Autoscaler: kubernetes/hpa.md
       - Features Overview: kubernetes/features.md
       - Common Troubleshooting: kubernetes/troubleshooting.md

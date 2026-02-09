@@ -434,4 +434,4 @@ This creates three PVCs: `pgdata-db-0`, `pgdata-db-1`, `pgdata-db-2`. Each pod a
 - **CI/CD runners** -- Ephemeral by nature, each job starts clean.
 
 !!! note
-    Our FastAPI project is fully stateless. It stores no data on disk, reads configuration from ConfigMaps and environment variables, and can be replaced at any time without data loss. This is the ideal design for Kubernetes -- it makes scaling, rolling updates, and self-healing trivial.
+    The FastAPI app itself is stateless, but the project includes a Redis instance that uses a PVC for data persistence. See [Redis Integration](redis.md) for a hands-on walkthrough of PVCs, Secrets, and ClusterIP Services in a multi-service setup.

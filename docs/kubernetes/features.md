@@ -372,7 +372,7 @@ containers:
             key: password
 ```
 
-See [Configuration & Secrets](configuration-and-secrets.md) for more detail on Secrets, including how to create them with `kubectl`.
+See [Configuration & Secrets](configuration-and-secrets.md) for more detail on Secrets, including how to create them with `kubectl`. For a hands-on example of Secrets in practice, see [Redis Integration](redis.md) where the Redis password is stored in a Secret and injected into both Redis and FastAPI pods.
 
 !!! warning
     Base64 is encoding, not encryption. Anyone with access to the cluster can decode Secrets. For production, enable encryption at rest and consider external secret managers (see the Security section below).
