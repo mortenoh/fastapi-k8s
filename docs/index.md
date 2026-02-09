@@ -31,6 +31,24 @@ curl http://127.0.0.1:8000
 # {"message":"Hello from fastapi-k8s!","server":"your-hostname"}
 ```
 
+## Project Structure
+
+```
+src/fastapi_k8s/       Application package (FastAPI app, routes)
+tests/                 Pytest unit tests
+k8s/                   Extra K8s manifests (HPA, Redis, Secret)
+k8s.yaml               Main deployment manifest (ConfigMap + Deployment + Service)
+docs/                  MkDocs documentation source
+Makefile               Build, deploy, test, and scale commands
+Dockerfile             Multi-stage container build
+pyproject.toml         Python project config and dependencies (uv)
+mkdocs.yml             MkDocs site configuration
+```
+
+The application uses a `src` layout -- the FastAPI app lives in `src/fastapi_k8s/` and is installed as a package. This is the recommended Python project structure because it prevents accidental imports from the working directory. Tests live in `tests/` at the project root and run with `make test`.
+
+Kubernetes manifests are split across two locations: `k8s.yaml` in the project root contains the core deployment (ConfigMap, Deployment, Service), while `k8s/` holds additional resources (HPA, Redis, Secret) that are deployed separately.
+
 ## Docker
 
 ```bash
@@ -96,7 +114,8 @@ curl http://localhost
 | `make logs` | `kubectl logs -l app=fastapi-k8s` | View pod logs |
 | `make scale N=3` | `kubectl scale deployment ... --replicas=3` | Scale deployment to N replicas |
 | `make undeploy` | `kubectl delete -f k8s.yaml` | Remove from Kubernetes |
-| `make test` | build + deploy + curl all endpoints | Build, deploy, and test all endpoints |
+| `make test` | `pytest` | Run unit tests with pytest |
+| `make test-e2e` | build + deploy + curl all endpoints | Build, deploy, and test all endpoints |
 | `make clean` | undeploy + `docker rmi` | Remove K8s resources and Docker image |
 | `make metrics-server` | install + patch metrics-server | Install metrics-server for HPA and kubectl top |
 | `make hpa` | `kubectl apply -f k8s/hpa.yaml` | Apply HPA for autoscaling |
@@ -104,6 +123,12 @@ curl http://localhost
 | `make hpa-delete` | `kubectl delete -f k8s/hpa.yaml` | Delete HPA |
 | `make restart` | `kubectl rollout restart deployment/fastapi-k8s` | Trigger rolling restart of deployment |
 | `make rollout-status` | `kubectl rollout status deployment/fastapi-k8s` | Watch rollout progress |
+| `make redis-deploy` | `kubectl apply -f k8s/redis-secret.yaml,k8s/redis.yaml` | Deploy Redis (Secret + PVC + Deployment + Service) |
+| `make redis-status` | `kubectl get pods,svc,pvc -l app=redis` | Check Redis pod, service, and PVC status |
+| `make redis-logs` | `kubectl logs -l app=redis` | View Redis pod logs |
+| `make redis-undeploy` | `kubectl delete -f k8s/redis.yaml` | Remove Redis Deployment and Service (keeps PVC/Secret) |
+| `make redis-clean` | delete redis + PVC + Secret | Full Redis cleanup |
+| `make test-redis` | curl Redis endpoints | Test Redis endpoints |
 | `make docs` | `uv run mkdocs serve` | Serve documentation locally |
 | `make docs-build` | `uv run mkdocs build` | Build documentation site |
 
