@@ -33,9 +33,17 @@ def mock_redis():
         store[key] = store.get(key, 0) + 1
         return store[key]
 
+    def fake_delete(key):
+        store.pop(key, None)
+
+    def fake_expire(key, ttl):
+        pass
+
     fake.get = MagicMock(side_effect=fake_get)
     fake.set = MagicMock(side_effect=fake_set)
     fake.incr = MagicMock(side_effect=fake_incr)
+    fake.delete = MagicMock(side_effect=fake_delete)
+    fake.expire = MagicMock(side_effect=fake_expire)
 
     with patch.object(app_mod, "_get_redis", return_value=fake):
         yield fake

@@ -1,10 +1,12 @@
+import json
 import os
+import secrets
 import socket
 import sys
 import time
 
 import redis
-from fastapi import FastAPI
+from fastapi import Cookie, Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -16,6 +18,9 @@ APP_VERSION = "1.0.0"
 APP_NAME = os.getenv("APP_NAME", "fastapi-k8s")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info").lower()
 MAX_STRESS_SECONDS = int(os.getenv("MAX_STRESS_SECONDS", "30"))
+SESSION_TTL = int(os.getenv("SESSION_TTL", "3600"))
+
+USERS = {"admin": "admin", "user": "user"}
 
 _LOG_LEVELS = {"debug": 0, "info": 1, "warning": 2, "error": 3}
 
@@ -47,9 +52,47 @@ class KeyValueInput(BaseModel):
     value: str
 
 
+class LoginInput(BaseModel):
+    username: str
+    password: str
+
+
 def _log(level: str, message: str):
     if _LOG_LEVELS.get(level, 1) >= _LOG_LEVELS.get(LOG_LEVEL, 1):
         print(f"[{level.upper()}] {message}", file=sys.stderr, flush=True)
+
+
+# --- Session helpers ---
+
+
+def _create_session(username: str) -> str:
+    r = _get_redis()
+    session_id = secrets.token_hex(16)
+    r.set(f"session:{session_id}", json.dumps({"username": username}))
+    r.expire(f"session:{session_id}", SESSION_TTL)
+    return session_id
+
+
+def _get_session(session_id: str) -> dict | None:
+    r = _get_redis()
+    data = r.get(f"session:{session_id}")
+    if data is None:
+        return None
+    return json.loads(data)
+
+
+def _delete_session(session_id: str):
+    r = _get_redis()
+    r.delete(f"session:{session_id}")
+
+
+def get_current_user(session_id: str | None = Cookie(None)):
+    if session_id is None:
+        raise HTTPException(status_code=401, detail="not authenticated")
+    session = _get_session(session_id)
+    if session is None:
+        raise HTTPException(status_code=401, detail="session expired")
+    return session
 
 
 # --- Readiness toggle (app-level state) ---
@@ -181,3 +224,37 @@ async def kv_set(key: str, body: KeyValueInput):
     except Exception as e:
         _log("error", f"redis error: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# --- Auth endpoints ---
+
+
+@app.post("/login")
+async def login(body: LoginInput):
+    if body.username not in USERS or USERS[body.username] != body.password:
+        raise HTTPException(status_code=401, detail="invalid credentials")
+    try:
+        session_id = _create_session(body.username)
+    except redis.ConnectionError as e:
+        _log("error", f"redis connection failed: {e}")
+        return JSONResponse(status_code=503, content={"error": "redis unavailable"})
+    response = JSONResponse(content={"message": "logged in", "username": body.username})
+    response.set_cookie(key="session_id", value=session_id, httponly=True)
+    return response
+
+
+@app.post("/logout")
+async def logout(session_id: str | None = Cookie(None)):
+    if session_id is not None:
+        try:
+            _delete_session(session_id)
+        except redis.ConnectionError:
+            pass
+    response = JSONResponse(content={"message": "logged out"})
+    response.delete_cookie(key="session_id")
+    return response
+
+
+@app.get("/me")
+async def me(user: dict = Depends(get_current_user)):
+    return {"username": user["username"], "server": socket.gethostname()}
