@@ -142,7 +142,7 @@ async def visits():
     try:
         r = _get_redis()
         count = r.incr("visits")
-        return {"visits": count, "server": socket.gethostname()}
+        return {"visits": count, "server": socket.gethostname(), "redis_host": REDIS_HOST}
     except redis.ConnectionError as e:
         _log("error", f"redis connection failed: {e}")
         return JSONResponse(status_code=503, content={"error": "redis unavailable"})
