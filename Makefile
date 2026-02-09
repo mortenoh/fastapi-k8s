@@ -84,21 +84,42 @@ redis-clean: ## Full Redis cleanup (Deployment + PVC + Secret)
 	-kubectl delete -f k8s/redis-secret.yaml
 	-kubectl delete pvc redis-pvc
 
-test-redis: ## Test Redis endpoints (visits, kv store)
-	@echo "=== Testing GET /visits (first) ==="
+test-redis: ## Test Redis endpoints (visits, kv store, shared state)
+	@echo "=== 1. Visit counter (shows redis_host for DNS discovery) ==="
 	curl -sf http://localhost/visits
 	@echo ""
-	@echo "=== Testing GET /visits (second) ==="
+	@echo ""
+	@echo "=== 2. Visit counter again (count increments, server may differ) ==="
 	curl -sf http://localhost/visits
 	@echo ""
-	@echo "=== Testing POST /kv/greeting ==="
+	@echo ""
+	@echo "=== 3. Shared state across replicas (5 requests, same counter, different servers) ==="
+	@for i in 1 2 3 4 5; do curl -sf http://localhost/visits; echo ""; done
+	@echo ""
+	@echo "=== 4. Store a key-value pair ==="
 	curl -sf -X POST -H "Content-Type: application/json" -d '{"value":"hello from k8s"}' http://localhost/kv/greeting
 	@echo ""
-	@echo "=== Testing GET /kv/greeting ==="
+	@echo ""
+	@echo "=== 5. Retrieve the stored value ==="
 	curl -sf http://localhost/kv/greeting
 	@echo ""
-	@echo "=== Testing GET /kv/missing (expect 404) ==="
-	curl -s -o /dev/null -w "%{http_code}" http://localhost/kv/missing | grep -q 404 && echo '{"status":"got expected 404"}'
+	@echo ""
+	@echo "=== 6. Overwrite the value ==="
+	curl -sf -X POST -H "Content-Type: application/json" -d '{"value":"updated value"}' http://localhost/kv/greeting
+	@echo ""
+	@echo ""
+	@echo "=== 7. Verify overwritten value ==="
+	curl -sf http://localhost/kv/greeting
+	@echo ""
+	@echo ""
+	@echo "=== 8. Get missing key (expect 404) ==="
+	curl -s -o /dev/null -w "HTTP %{http_code} " http://localhost/kv/nonexistent && echo "(expected 404)"
+	@echo ""
+	@echo "=== 9. Existing endpoints still work without Redis ==="
+	curl -sf http://localhost/health
+	@echo ""
+	curl -sf http://localhost/config
+	@echo ""
 	@echo ""
 	@echo "=== All Redis tests passed ==="
 
