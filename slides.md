@@ -5,26 +5,22 @@ info: |
   15 key takeaways from deploying a FastAPI app to Kubernetes on Docker Desktop.
 class: text-center
 transition: slide-left
-canvasWidth: 1200
 ---
 
 # Kubernetes
 
 What we learned deploying a FastAPI app to K8s
 
-<div class="abs-br m-6 text-xs opacity-50">
-fastapi-k8s
-</div>
+<style>
+.slidev-layout { font-size: 0.85em; }
+.slidev-layout h1 { font-size: 1.75em; }
+.slidev-layout h3 { font-size: 1.15em; }
+.slidev-layout pre, .slidev-layout code { font-size: 0.9em; }
+.slidev-layout table { font-size: 0.9em; }
+.slidev-layout td, .slidev-layout th { padding: 0.25em 0.6em; }
+</style>
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-h3 { font-size: 1.1em !important; }
-p, li, td, th { font-size: 0.85em !important; }
-pre { font-size: 0.8em !important; }
-table { font-size: 0.85em !important; }
-</style>
 
 # Three ideas that change everything
 
@@ -49,13 +45,7 @@ Each layer adds one capability: scaling, updates, stable networking.
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li, td, th { font-size: 0.75em !important; }
-table { font-size: 0.75em !important; }
-</style>
-
-# 15 things worth knowing
+# 15 things worth knowing (1/2)
 
 | Nr | Takeaway | Concept |
 |----|----------|---------|
@@ -67,6 +57,13 @@ table { font-size: 0.75em !important; }
 | 6 | Requests and limits | Scheduling + QoS classes |
 | 7 | Liveness and readiness probes | Self-healing |
 | 8 | Rolling updates | Zero-downtime deploys |
+
+---
+
+# 15 things worth knowing (2/2)
+
+| Nr | Takeaway | Concept |
+|----|----------|---------|
 | 9 | HPA autoscales on metrics | CPU-driven replica count |
 | 10 | PVCs decouple storage | Data survives restarts |
 | 11 | ClusterIP vs LoadBalancer | Internal vs external access |
@@ -84,13 +81,6 @@ layout: section
 You describe **what**, Kubernetes figures out **how**
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-h3 { font-size: 1.0em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # Imperative vs Declarative
 
@@ -128,11 +118,6 @@ Pod dies? A new one appears. No scripts needed.
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-</style>
-
 # The reconciliation loop
 
 ```mermaid
@@ -158,11 +143,6 @@ layout: section
 The smallest deployable unit -- not containers
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-</style>
 
 # What is a Pod?
 
@@ -205,11 +185,6 @@ Deployment &rarr; ReplicaSet &rarr; Pod
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li, td, th { font-size: 0.85em !important; }
-</style>
-
 # Deployment &rarr; ReplicaSet &rarr; Pod
 
 ```mermaid
@@ -239,12 +214,6 @@ layout: section
 Stable networking for ephemeral pods
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # Why Services exist
 
@@ -295,12 +264,6 @@ layout: section
 Separate config from code
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # ConfigMap in action
 
@@ -355,12 +318,6 @@ Control scheduling and stability
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li, td, th { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
-
 # Requests vs Limits
 
 ```yaml
@@ -393,13 +350,6 @@ layout: section
 Liveness and readiness drive self-healing
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-h3 { font-size: 1.0em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # Two probes, two purposes
 
@@ -454,12 +404,6 @@ Zero-downtime deployments
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
-
 # How rolling updates work
 
 ```yaml
@@ -503,12 +447,6 @@ Scale based on metrics
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
-
 # HPA configuration
 
 ```yaml
@@ -545,12 +483,6 @@ layout: section
 Data that survives pod restarts
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # PVC: requesting storage
 
@@ -602,13 +534,6 @@ ClusterIP vs LoadBalancer
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-h3 { font-size: 1.0em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
-
 # Choosing the right Service type
 
 <div class="grid grid-cols-2 gap-8">
@@ -658,12 +583,6 @@ Names, not IPs
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
-
 # How services find each other
 
 ```
@@ -694,13 +613,6 @@ layout: section
 Different scaling strategies
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-h3 { font-size: 1.0em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # Two deployment strategies
 
@@ -753,11 +665,6 @@ Why Redis is in the picture
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-</style>
-
 # The problem with in-memory state
 
 ```mermaid
@@ -770,11 +677,6 @@ graph TB
 Three pods, three different visit counts. Pod dies? Count lost.
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-</style>
 
 # Redis as shared state
 
@@ -802,12 +704,6 @@ layout: section
 Fast builds through layer order
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li, td, th { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # Layer order matters
 
@@ -838,11 +734,6 @@ CMD ["uv", "run", "uvicorn", "fastapi_k8s:app",
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-</style>
-
 # Full architecture
 
 ```mermaid
@@ -871,11 +762,6 @@ graph TB
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-td, th { font-size: 0.8em !important; }
-</style>
-
 # What we built
 
 | Resource | Purpose |
@@ -891,11 +777,6 @@ td, th { font-size: 0.8em !important; }
 | **Dockerfile** | Multi-stage build with layer caching |
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-td, th { font-size: 0.8em !important; }
-</style>
 
 # Key commands
 
@@ -913,11 +794,6 @@ td, th { font-size: 0.8em !important; }
 | `kubectl rollout undo` | Rollback to previous version |
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-pre { font-size: 0.7em !important; }
-</style>
 
 # Useful kubectl commands
 
@@ -945,12 +821,6 @@ kubectl rollout history deployment/fastapi-k8s
 ```
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # The Downward API
 
@@ -980,11 +850,6 @@ The `/info` endpoint exposes all of these. Useful for debugging which pod handle
 
 ---
 
-<style>
-h1 { font-size: 1.6em !important; }
-td, th { font-size: 0.8em !important; }
-</style>
-
 # API endpoints
 
 | Endpoint | Purpose |
@@ -1003,12 +868,6 @@ td, th { font-size: 0.8em !important; }
 | `GET /me` | Current user + hostname |
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.7em !important; }
-</style>
 
 # Experimenting with the cluster
 
@@ -1037,12 +896,6 @@ make hpa-status  # watch replicas increase
 ```
 
 ---
-
-<style>
-h1 { font-size: 1.6em !important; }
-p, li { font-size: 0.85em !important; }
-pre { font-size: 0.75em !important; }
-</style>
 
 # Recap: mental model
 
