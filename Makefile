@@ -1,14 +1,14 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev run lint docker-build docker-run deploy status logs scale undeploy clean test metrics-server hpa hpa-status hpa-delete restart rollout-status docs docs-serve docs-build redis-deploy redis-status redis-logs redis-undeploy redis-clean test-redis
+.PHONY: help dev run lint docker-build docker-run deploy status logs scale undeploy clean test test-e2e metrics-server hpa hpa-status hpa-delete restart rollout-status docs docs-serve docs-build redis-deploy redis-status redis-logs redis-undeploy redis-clean test-redis
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
 dev: ## Run local dev server with hot-reload
-	uv run fastapi dev main.py
+	uv run fastapi dev src/fastapi_k8s/main.py
 
 run: ## Run with uvicorn directly
-	uv run main.py
+	uv run python -m fastapi_k8s
 
 lint: ## Run ruff linter and formatter check
 	uv run ruff check .
@@ -123,7 +123,10 @@ test-redis: ## Test Redis endpoints (visits, kv store, shared state)
 	@echo ""
 	@echo "=== All Redis tests passed ==="
 
-test: ## Build, deploy, wait for pods, and test all endpoints
+test: ## Run unit tests with pytest
+	uv run pytest -q
+
+test-e2e: ## Build, deploy, wait for pods, and test all endpoints
 	@echo "=== Building Docker image ==="
 	docker build -t fastapi-k8s:latest .
 	@echo ""
