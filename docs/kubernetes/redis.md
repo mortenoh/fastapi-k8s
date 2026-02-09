@@ -5,8 +5,9 @@ This page walks through adding Redis as a second service to the cluster. It buil
 By the end, you will have:
 
 - A Redis instance with password authentication (Secret), persistent data (PVC), and internal-only access (ClusterIP)
-- Three new FastAPI endpoints that read and write data through Redis
+- Six new FastAPI endpoints that read and write data through Redis
 - A demonstration of shared state across multiple stateless replicas
+- Cookie-based authentication with Redis-backed sessions that work across all pods
 
 ---
 
@@ -36,6 +37,9 @@ Up to this point, the FastAPI app is entirely stateless. Every pod is interchang
      |   |  GET /visits -----|-------->|  port 6379       |    |
      |   |  GET /kv/{key}    | "redis" |  --requirepass   |    |
      |   |  POST /kv/{key}   |         |  --appendonly    |    |
+     |   |  POST /login      |         |                  |    |
+     |   |  POST /logout     |         |                  |    |
+     |   |  GET /me           |         |                  |    |
      |   +--------+----------+         +--------+---------+    |
      |            |                             |              |
      |   +--------+----------+         +--------+---------+    |
@@ -60,15 +64,20 @@ The FastAPI Service is type `LoadBalancer` (accessible from your machine). The R
 
 ## New API endpoints
 
-Three endpoints use Redis. All existing endpoints continue to work regardless of whether Redis is deployed.
+Six endpoints use Redis. All existing endpoints continue to work regardless of whether Redis is deployed.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/visits` | GET | Increment and return a shared visit counter. Shows `server` (FastAPI pod) and `redis_host` (DNS name). |
 | `/kv/{key}` | GET | Retrieve a value by key. Returns 404 if not found. |
 | `/kv/{key}` | POST | Store a value under a key. Body: `{"value": "..."}` |
+| `/login` | POST | Login with username/password. Sets a `session_id` cookie backed by Redis. Body: `{"username": "...", "password": "..."}` |
+| `/logout` | POST | Clear the session from Redis and delete the cookie. |
+| `/me` | GET | Return the current user and server hostname. Requires a valid session cookie. |
 
-All three return HTTP 503 with `{"error": "redis unavailable"}` if Redis is not reachable. This means the app degrades gracefully -- core endpoints like `/health`, `/ready`, and `/config` keep working even without Redis.
+The data endpoints return HTTP 503 with `{"error": "redis unavailable"}` if Redis is not reachable. The `/login` endpoint also returns 503 if Redis is down. This means the app degrades gracefully -- core endpoints like `/health`, `/ready`, and `/config` keep working even without Redis.
+
+The auth endpoints demonstrate another form of shared state: a user can log in on one pod and subsequent requests served by any other pod will see the same session, because the session data lives in Redis.
 
 ---
 
@@ -388,6 +397,34 @@ Each response shows:
 
 Without Redis (or any shared state), each pod would have its own counter that resets on every restart. Redis makes the counter truly shared and persistent.
 
+### Shared sessions across replicas
+
+The same principle applies to authentication. Log in once, and every pod recognises the session:
+
+```bash
+# Login and capture the session cookie
+curl -sf -X POST -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin"}' \
+  -c cookies.txt http://localhost/login
+
+# Hit /me multiple times -- same user, different servers
+for i in {1..5}; do curl -sf -b cookies.txt http://localhost/me | python3 -m json.tool; done
+```
+
+```json
+{
+    "username": "admin",
+    "server": "fastapi-k8s-5d45df96fb-w9vst"
+}
+{
+    "username": "admin",
+    "server": "fastapi-k8s-5d45df96fb-abc12"
+}
+...
+```
+
+The `username` is always the same (the session is in Redis), while the `server` varies (Kubernetes load-balances across pods). Two hardcoded users are available for testing: `admin`/`admin` and `user`/`user`.
+
 ### DNS-based service discovery
 
 The `redis_host` field in the response shows `redis` -- that is the Kubernetes Service name. Under the hood, CoreDNS resolves it:
@@ -546,6 +583,6 @@ This deletes everything: Deployment, Service, PVC, and Secret. All Redis data is
 | ConfigMap | `REDIS_HOST` and `REDIS_PORT` added to the FastAPI ConfigMap |
 | `optional: true` | FastAPI starts even if the Redis Secret is not yet deployed |
 | Recreate strategy | Ensures only one Redis instance accesses the PVC at a time |
-| Shared state | Visit counter demonstrates all FastAPI replicas sharing one Redis |
+| Shared state | Visit counter and cross-pod sessions demonstrate all FastAPI replicas sharing one Redis |
 
 This integration ties together Secrets, PersistentVolumeClaims, ClusterIP Services, and DNS-based service discovery into a practical multi-service deployment -- the foundation for any real Kubernetes application.
