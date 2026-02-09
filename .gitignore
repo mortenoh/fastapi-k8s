@@ -14,3 +14,7 @@ wheels/
 
 # MkDocs build output
 site/
+
+# Node (Slidev)
+node_modules/
+slides-dist/

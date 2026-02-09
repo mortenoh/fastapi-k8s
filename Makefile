@@ -73,10 +73,10 @@ docs-build: ## Build documentation site
 docs: docs-serve ## Alias for docs-serve
 
 slides: ## Serve slide deck locally with hot-reload
-	bunx @slidev/cli dev slides.md --open
+	bunx slidev slides.md --open
 
 slides-build: ## Build slide deck as static site
-	bunx @slidev/cli build slides.md --out slides-dist
+	bunx slidev build slides.md --out slides-dist
 
 redis-deploy: ## Deploy Redis (Secret + PVC + Deployment + Service)
 	kubectl apply -f k8s/redis-secret.yaml -f k8s/redis.yaml
