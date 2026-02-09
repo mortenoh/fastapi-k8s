@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-k8s
+  labels:
+    app: fastapi-k8s
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: fastapi-k8s
+  template:
+    metadata:
+      labels:
+        app: fastapi-k8s
+    spec:
+      containers:
+        - name: fastapi-k8s
+          image: fastapi-k8s:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-k8s
+  labels:
+    app: fastapi-k8s
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8000
+  selector:
+    app: fastapi-k8s
