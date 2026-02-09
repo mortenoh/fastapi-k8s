@@ -262,7 +262,7 @@ $ curl -s http://localhost/info | python -m json.tool
 ```
 
 !!! note "CPU and memory values in the Downward API"
-    CPU values are expressed in whole cores (so `50m` becomes `1` when rounded, and `200m` also shows as `1` core). Memory values are expressed in bytes (`64Mi` = 67,108,864 bytes, `128Mi` = 134,217,728 bytes). Your application code may need to convert these for display purposes.
+    The format depends on the `divisor` field in the `resourceFieldRef`. When no divisor is specified (as in our manifest), CPU defaults to a divisor of `1` (whole cores) and memory defaults to a divisor of `1` (bytes). With a divisor of `1` core, both `50m` and `200m` are rounded up to `1` because they are fractions of a single core. To see millicores instead, add `divisor: 1m` to the CPU resource field references. Memory values are exact in bytes: `64Mi` = 67,108,864 bytes, `128Mi` = 134,217,728 bytes.
 
 ## Monitoring resource usage
 
