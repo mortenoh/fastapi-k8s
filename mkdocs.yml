@@ -30,6 +30,7 @@ theme:
 nav:
   - Home: index.md
   - Kubernetes Guide:
+      - What We Learned: kubernetes/what-we-learned.md
       - What is Kubernetes?: kubernetes/what-is-kubernetes.md
       - Core Concepts: kubernetes/core-concepts.md
       - Your First Deployment: kubernetes/first-deployment.md
