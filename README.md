@@ -45,6 +45,9 @@ This serves the docs locally at `http://127.0.0.1:8000`.
 | `/info` | GET | Pod metadata via Downward API |
 | `/config` | GET | Current ConfigMap values |
 | `/version` | GET | App version and server hostname |
+| `/visits` | GET | Increment and return shared visit counter (Redis) |
+| `/kv/{key}` | GET | Retrieve a value by key from Redis |
+| `/kv/{key}` | POST | Store a value under a key in Redis |
 
 ## Key Make Targets
 
@@ -60,6 +63,10 @@ This serves the docs locally at `http://127.0.0.1:8000`.
 | `make hpa` | Apply HPA for autoscaling |
 | `make metrics-server` | Install metrics-server for HPA and kubectl top |
 | `make docs` | Serve documentation locally |
+| `make redis-deploy` | Deploy Redis to Kubernetes |
+| `make redis-status` | Check Redis pod, service, and PVC status |
+| `make test-redis` | Test Redis endpoints |
+| `make redis-clean` | Full Redis cleanup |
 | `make undeploy` | Remove from Kubernetes |
 
 Run `make` with no arguments to see all available targets.

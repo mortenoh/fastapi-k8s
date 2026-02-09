@@ -23,6 +23,8 @@ FastAPI app deployed to Kubernetes on Docker Desktop.
 - `main.py` — FastAPI application
 - `k8s.yaml` — ConfigMap + Kubernetes Deployment + Service
 - `k8s/hpa.yaml` — HorizontalPodAutoscaler manifest
+- `k8s/redis.yaml` — Redis PVC + Deployment + ClusterIP Service
+- `k8s/redis-secret.yaml` — Redis password Secret
 - `Makefile` — Build, run, deploy, and scale commands
 - `Dockerfile` — Multi-stage Docker build
 - `docs/` — MkDocs documentation source (Kubernetes guide, walkthroughs)
@@ -40,6 +42,9 @@ FastAPI app deployed to Kubernetes on Docker Desktop.
 - `GET /info` -- Pod metadata via Downward API env vars
 - `GET /config` -- Current ConfigMap values (APP_NAME, LOG_LEVEL, MAX_STRESS_SECONDS)
 - `GET /version` -- App version and server hostname
+- `GET /visits` -- Increment and return shared visit counter (Redis)
+- `GET /kv/{key}` -- Retrieve a value by key from Redis (404 if missing)
+- `POST /kv/{key}` -- Store a value (`{"value": "..."}`) under a key in Redis
 
 ## Common Commands
 
@@ -59,3 +64,9 @@ FastAPI app deployed to Kubernetes on Docker Desktop.
 - `make rollout-status` — Watch rollout progress
 - `make docs` — Serve documentation locally
 - `make docs-build` — Build documentation site
+- `make redis-deploy` — Deploy Redis (Secret + PVC + Deployment + Service)
+- `make redis-status` — Check Redis pod, service, and PVC status
+- `make redis-logs` — View Redis pod logs
+- `make redis-undeploy` — Remove Redis Deployment and Service (keeps PVC/Secret)
+- `make redis-clean` — Full Redis cleanup (Deployment + PVC + Secret)
+- `make test-redis` — Test Redis endpoints
