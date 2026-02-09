@@ -2,6 +2,8 @@
 
 A simple FastAPI app deployed to Kubernetes using Docker Desktop.
 
+**[Slide Deck](slides/)** -- Kubernetes learnings as a presentation
+
 ## Prerequisites
 
 - Python 3.13
