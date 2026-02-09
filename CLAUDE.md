@@ -46,6 +46,9 @@ FastAPI app deployed to Kubernetes on Docker Desktop.
 - `GET /visits` -- Increment and return shared visit counter (Redis)
 - `GET /kv/{key}` -- Retrieve a value by key from Redis (404 if missing)
 - `POST /kv/{key}` -- Store a value (`{"value": "..."}`) under a key in Redis
+- `POST /login` -- Login with username/password, sets session cookie (Redis-backed)
+- `POST /logout` -- Clear session cookie and Redis session
+- `GET /me` -- Current user info and server hostname (requires session)
 
 ## Common Commands
 
