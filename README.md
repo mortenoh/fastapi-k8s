@@ -17,7 +17,7 @@ uv sync
 # Local dev server with hot-reload
 make dev
 
-# Build, deploy to K8s, and test all endpoints
+# Run unit tests
 make test
 ```
 
@@ -56,7 +56,8 @@ This serves the docs locally at `http://127.0.0.1:8000`.
 | `make dev` | Local dev server with hot-reload |
 | `make docker-build` | Build Docker image |
 | `make deploy` | Deploy to Kubernetes |
-| `make test` | Build, deploy, and test all endpoints |
+| `make test` | Run unit tests with pytest |
+| `make test-e2e` | Build, deploy, and test all endpoints |
 | `make status` | Check pod and service status |
 | `make scale N=3` | Scale deployment to N replicas |
 | `make restart` | Trigger rolling restart |

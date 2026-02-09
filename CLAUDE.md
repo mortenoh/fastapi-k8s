@@ -20,7 +20,8 @@ FastAPI app deployed to Kubernetes on Docker Desktop.
 
 ## Key Files
 
-- `main.py` — FastAPI application
+- `src/fastapi_k8s/` — FastAPI application package
+- `tests/` — Unit tests (pytest)
 - `k8s.yaml` — ConfigMap + Kubernetes Deployment + Service
 - `k8s/hpa.yaml` — HorizontalPodAutoscaler manifest
 - `k8s/redis.yaml` — Redis PVC + Deployment + ClusterIP Service
@@ -54,7 +55,8 @@ FastAPI app deployed to Kubernetes on Docker Desktop.
 - `make status` — Check pod/service status
 - `make scale N=5` — Scale to N replicas
 - `make logs` — View pod logs
-- `make test` — Build, deploy, and test all endpoints
+- `make test` — Run unit tests with pytest
+- `make test-e2e` — Build, deploy, and test all endpoints
 - `make undeploy` — Remove from Kubernetes
 - `make metrics-server` — Install metrics-server for HPA and kubectl top
 - `make hpa` — Apply HPA for autoscaling
