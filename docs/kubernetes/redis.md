@@ -399,14 +399,50 @@ Without Redis (or any shared state), each pod would have its own counter that re
 
 ### Shared sessions across replicas
 
-The same principle applies to authentication. Log in once, and every pod recognises the session:
+The visit counter demonstrates shared data. Sessions demonstrate shared authentication -- a user logs in on one pod and every other pod recognises the session. This is the same problem that any horizontally-scaled web application must solve, and Redis is a common answer.
+
+#### How sessions work
+
+The flow has four steps:
+
+1. **Login** -- The client sends credentials to `POST /login`. The server validates them, generates a random session ID (`secrets.token_hex(16)` -- 32 hex characters), and stores the session in Redis under the key `session:{session_id}` with a JSON payload (`{"username": "admin"}`) and a TTL of 3600 seconds (1 hour).
+2. **Cookie** -- The response sets a `session_id` cookie (`httponly=True`) containing the session ID. The browser (or curl's cookie jar) sends this cookie with every subsequent request.
+3. **Validation** -- When a request hits `GET /me`, the server reads the `session_id` cookie, looks up `session:{session_id}` in Redis, and returns the session data. If the key does not exist (expired or deleted), the server returns 401.
+4. **Logout** -- `POST /logout` deletes the Redis key and clears the cookie. The session is gone immediately.
+
+Because the session data lives in Redis (not in pod memory), it does not matter which pod handles the request. All five FastAPI replicas connect to the same Redis instance, so they all see the same sessions.
+
+#### What happens when a pod dies
+
+If a FastAPI pod is killed or restarted, nothing happens to the session. The session data is in Redis, not in the pod. The user's next request is routed to a surviving pod, which reads the same session from Redis and responds normally. This is the whole point of externalising session state.
+
+If the Redis pod is killed, sessions are temporarily unavailable (login returns 503, /me returns 401 because the lookup fails). But because Redis data is on a PVC with append-only persistence, the sessions come back when the new Redis pod starts and loads the AOF file. The only way to lose sessions is if the TTL expires while Redis is down, or if the PVC is deleted.
+
+#### Test users
+
+Two hardcoded users are available for testing:
+
+| Username | Password |
+|----------|----------|
+| `admin` | `admin` |
+| `user` | `user` |
+
+These are defined in the application code, not in Redis or Kubernetes. They exist purely for demonstration purposes.
+
+#### Try it
 
 ```bash
 # Login and capture the session cookie
 curl -sf -X POST -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin"}' \
   -c cookies.txt http://localhost/login
+```
 
+```json
+{"message":"logged in","username":"admin"}
+```
+
+```bash
 # Hit /me multiple times -- same user, different servers
 for i in {1..5}; do curl -sf -b cookies.txt http://localhost/me | python3 -m json.tool; done
 ```
@@ -423,7 +459,18 @@ for i in {1..5}; do curl -sf -b cookies.txt http://localhost/me | python3 -m jso
 ...
 ```
 
-The `username` is always the same (the session is in Redis), while the `server` varies (Kubernetes load-balances across pods). Two hardcoded users are available for testing: `admin`/`admin` and `user`/`user`.
+The `username` is always the same (the session is in Redis), while the `server` varies (Kubernetes load-balances across pods).
+
+```bash
+# Logout
+curl -sf -X POST -b cookies.txt -c cookies.txt http://localhost/logout
+```
+
+```json
+{"message":"logged out"}
+```
+
+After logout, `GET /me` returns 401 because the Redis key has been deleted.
 
 ### DNS-based service discovery
 
