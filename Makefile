@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev run lint docker-build docker-run deploy status logs scale undeploy clean test test-e2e metrics-server hpa hpa-status hpa-delete restart rollout-status docs docs-serve docs-build redis-deploy redis-status redis-logs redis-undeploy redis-clean test-redis
+.PHONY: help dev run lint docker-build docker-run deploy status logs scale undeploy clean test test-e2e metrics-server hpa hpa-status hpa-delete restart rollout-status docs docs-serve docs-build redis-deploy redis-status redis-logs redis-undeploy redis-clean test-redis slides slides-build
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -71,6 +71,12 @@ docs-build: ## Build documentation site
 	uv run mkdocs build
 
 docs: docs-serve ## Alias for docs-serve
+
+slides: ## Serve slide deck locally with hot-reload
+	npx @slidev/cli dev slides.md --open
+
+slides-build: ## Build slide deck as static site
+	npx @slidev/cli build slides.md --out slides-dist
 
 redis-deploy: ## Deploy Redis (Secret + PVC + Deployment + Service)
 	kubectl apply -f k8s/redis-secret.yaml -f k8s/redis.yaml

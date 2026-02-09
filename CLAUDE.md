@@ -30,6 +30,7 @@ FastAPI app deployed to Kubernetes on Docker Desktop.
 - `Dockerfile` — Multi-stage Docker build
 - `docs/` — MkDocs documentation source (Kubernetes guide, walkthroughs)
 - `mkdocs.yml` — MkDocs configuration
+- `slides.md` — Slidev presentation (Kubernetes learnings)
 
 ## API Endpoints
 
@@ -75,3 +76,5 @@ FastAPI app deployed to Kubernetes on Docker Desktop.
 - `make redis-undeploy` — Remove Redis Deployment and Service (keeps PVC/Secret)
 - `make redis-clean` — Full Redis cleanup (Deployment + PVC + Secret)
 - `make test-redis` — Test Redis endpoints
+- `make slides` — Serve slide deck locally with hot-reload
+- `make slides-build` — Build slide deck as static site
