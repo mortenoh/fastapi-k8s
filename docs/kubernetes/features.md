@@ -434,6 +434,8 @@ Use CSI drivers when you need storage beyond what Kubernetes natively supports:
 
 Kubernetes supports multiple dimensions of scaling -- from individual pod resources to the entire cluster.
 
+See [Scaling](scaling.md) for a hands-on walkthrough of manual scaling, load balancing, and scale-up/down behavior.
+
 ### Horizontal Pod Autoscaler (HPA)
 
 The **HPA** automatically adjusts the number of pod replicas based on observed metrics (typically CPU or memory utilization). The HPA controller checks metrics every 15 seconds and calculates the desired replica count to bring utilization close to the target.
