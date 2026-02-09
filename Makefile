@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev run lint docker-build docker-run deploy status logs scale undeploy clean test metrics-server hpa hpa-status hpa-delete restart rollout-status docs docs-serve docs-build
+.PHONY: help dev run lint docker-build docker-run deploy status logs scale undeploy clean test metrics-server hpa hpa-status hpa-delete restart rollout-status docs docs-serve docs-build redis-deploy redis-status redis-logs redis-undeploy redis-clean test-redis
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -66,6 +66,41 @@ docs-build: ## Build documentation site
 	uv run mkdocs build
 
 docs: docs-serve ## Alias for docs-serve
+
+redis-deploy: ## Deploy Redis (Secret + PVC + Deployment + Service)
+	kubectl apply -f k8s/redis-secret.yaml -f k8s/redis.yaml
+
+redis-status: ## Check Redis pod, service, and PVC status
+	kubectl get pods,svc,pvc -l app=redis
+
+redis-logs: ## View Redis pod logs
+	kubectl logs -l app=redis
+
+redis-undeploy: ## Remove Redis Deployment and Service (keeps PVC and Secret)
+	kubectl delete -f k8s/redis.yaml
+
+redis-clean: ## Full Redis cleanup (Deployment + PVC + Secret)
+	-kubectl delete -f k8s/redis.yaml
+	-kubectl delete -f k8s/redis-secret.yaml
+	-kubectl delete pvc redis-pvc
+
+test-redis: ## Test Redis endpoints (visits, kv store)
+	@echo "=== Testing GET /visits (first) ==="
+	curl -sf http://localhost/visits
+	@echo ""
+	@echo "=== Testing GET /visits (second) ==="
+	curl -sf http://localhost/visits
+	@echo ""
+	@echo "=== Testing POST /kv/greeting ==="
+	curl -sf -X POST -H "Content-Type: application/json" -d '{"value":"hello from k8s"}' http://localhost/kv/greeting
+	@echo ""
+	@echo "=== Testing GET /kv/greeting ==="
+	curl -sf http://localhost/kv/greeting
+	@echo ""
+	@echo "=== Testing GET /kv/missing (expect 404) ==="
+	curl -s -o /dev/null -w "%{http_code}" http://localhost/kv/missing | grep -q 404 && echo '{"status":"got expected 404"}'
+	@echo ""
+	@echo "=== All Redis tests passed ==="
 
 test: ## Build, deploy, wait for pods, and test all endpoints
 	@echo "=== Building Docker image ==="
