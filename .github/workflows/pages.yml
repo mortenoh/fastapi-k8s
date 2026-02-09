@@ -22,9 +22,15 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
+      - uses: oven-sh/setup-bun@v2
+
       - run: uv sync --frozen
 
       - run: uv run mkdocs build
+
+      - run: bun install --frozen-lockfile
+
+      - run: bunx slidev build slides.md --base /fastapi-k8s/slides/ --out site/slides
 
       - uses: actions/upload-pages-artifact@v3
         with:
