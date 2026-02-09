@@ -5,24 +5,28 @@ info: |
   15 key takeaways from deploying a FastAPI app to Kubernetes on Docker Desktop.
 class: text-center
 transition: slide-left
-mdc: true
+canvasWidth: 1200
 ---
 
 # Kubernetes
 
 What we learned deploying a FastAPI app to K8s
 
-<div class="abs-br m-6 text-sm opacity-50">
+<div class="abs-br m-6 text-xs opacity-50">
 fastapi-k8s
 </div>
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+h3 { font-size: 1.1em !important; }
+p, li, td, th { font-size: 0.85em !important; }
+pre { font-size: 0.8em !important; }
+table { font-size: 0.85em !important; }
+</style>
 
 # Three ideas that change everything
-
-<br>
 
 <v-clicks>
 
@@ -38,22 +42,26 @@ Every K8s pattern -- Services, PVCs, probes -- exists because of this.
 
 ### 3. The layers exist for a reason
 
-Deployment > ReplicaSet > Pod. Service > Endpoints > Pod IPs.
+Deployment &rarr; ReplicaSet &rarr; Pod. Service &rarr; Endpoints &rarr; Pod IPs.
 Each layer adds one capability: scaling, updates, stable networking.
 
 </v-clicks>
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li, td, th { font-size: 0.75em !important; }
+table { font-size: 0.75em !important; }
+</style>
 
 # 15 things worth knowing
 
-| # | Takeaway | Concept |
-|---|----------|---------|
+| Nr | Takeaway | Concept |
+|----|----------|---------|
 | 1 | Declarative, not imperative | Desired state in YAML |
 | 2 | Pods, not containers | Smallest deployable unit |
-| 3 | Deployment > ReplicaSet > Pod | Three-layer hierarchy |
+| 3 | Deployment &rarr; ReplicaSet &rarr; Pod | Three-layer hierarchy |
 | 4 | Services give stable networking | DNS name + load balancing |
 | 5 | ConfigMaps and Secrets | Config separated from code |
 | 6 | Requests and limits | Scheduling + QoS classes |
@@ -76,6 +84,13 @@ layout: section
 You describe **what**, Kubernetes figures out **how**
 
 ---
+
+<style>
+h1 { font-size: 1.6em !important; }
+h3 { font-size: 1.0em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # Imperative vs Declarative
 
@@ -113,19 +128,22 @@ Pod dies? A new one appears. No scripts needed.
 
 ---
 
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+</style>
+
 # The reconciliation loop
 
 ```mermaid
 graph LR
     A[You write YAML] --> B[kubectl apply]
-    B --> C[Desired state stored in etcd]
+    B --> C[Desired state in etcd]
     C --> D[Controller sees diff]
     D --> E[Controller acts]
     E --> F[Actual state updated]
     F --> D
 ```
-
-<br>
 
 - The controller loop runs **continuously**
 - `kubectl apply` is idempotent -- run it 100 times, same result
@@ -141,6 +159,11 @@ The smallest deployable unit -- not containers
 
 ---
 
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+</style>
+
 # What is a Pod?
 
 <div class="grid grid-cols-2 gap-8">
@@ -148,7 +171,7 @@ The smallest deployable unit -- not containers
 
 A pod wraps **one or more containers** that share:
 
-- Network namespace (same IP, same `localhost`)
+- Network namespace (same IP, same localhost)
 - Storage volumes
 - Lifecycle (start together, stop together)
 
@@ -161,7 +184,7 @@ In practice, **most pods run a single container**.
 graph TB
     subgraph Pod
         C1[Container: fastapi-k8s]
-        N[Shared network<br>10.1.0.15]
+        N[Shared network\n10.1.0.15]
     end
     C1 --- N
 ```
@@ -178,15 +201,20 @@ layout: section
 
 # 3. The Three-Layer Hierarchy
 
-Deployment > ReplicaSet > Pod
+Deployment &rarr; ReplicaSet &rarr; Pod
 
 ---
 
-# Deployment > ReplicaSet > Pod
+<style>
+h1 { font-size: 1.6em !important; }
+p, li, td, th { font-size: 0.85em !important; }
+</style>
+
+# Deployment &rarr; ReplicaSet &rarr; Pod
 
 ```mermaid
 graph TB
-    D[Deployment<br>fastapi-k8s] --> RS[ReplicaSet<br>fastapi-k8s-7d9f8b]
+    D[Deployment\nfastapi-k8s] --> RS[ReplicaSet\nfastapi-k8s-7d9f8b]
     RS --> P1[Pod 1]
     RS --> P2[Pod 2]
     RS --> P3[Pod 3]
@@ -212,6 +240,12 @@ Stable networking for ephemeral pods
 
 ---
 
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
+
 # Why Services exist
 
 <div class="grid grid-cols-2 gap-8">
@@ -222,8 +256,8 @@ Stable networking for ephemeral pods
 Pods get new IPs on every restart.
 
 ```
-fastapi-k8s-7d9f8b-abc12  10.1.0.15  # dies
-fastapi-k8s-7d9f8b-def34  10.1.0.22  # new IP
+fastapi-k8s-abc12  10.1.0.15  # dies
+fastapi-k8s-def34  10.1.0.22  # new IP
 ```
 
 **The solution:**
@@ -261,6 +295,12 @@ layout: section
 Separate config from code
 
 ---
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # ConfigMap in action
 
@@ -315,6 +355,12 @@ Control scheduling and stability
 
 ---
 
+<style>
+h1 { font-size: 1.6em !important; }
+p, li, td, th { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
+
 # Requests vs Limits
 
 ```yaml
@@ -327,19 +373,15 @@ resources:
     memory: "128Mi"
 ```
 
-<br>
-
 | | CPU | Memory |
 |---|-----|--------|
 | **Over request** | Allowed (uses idle capacity) | Allowed |
 | **Over limit** | Throttled | OOMKilled |
 
-<br>
-
 **QoS classes** (determines eviction order):
 
 - **Guaranteed** -- requests = limits (last to be evicted)
-- **Burstable** -- requests < limits (evicted after BestEffort)
+- **Burstable** -- requests &lt; limits (evicted after BestEffort)
 - **BestEffort** -- no requests or limits (evicted first)
 
 ---
@@ -351,6 +393,13 @@ layout: section
 Liveness and readiness drive self-healing
 
 ---
+
+<style>
+h1 { font-size: 1.6em !important; }
+h3 { font-size: 1.0em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # Two probes, two purposes
 
@@ -393,8 +442,6 @@ readinessProbe:
 </div>
 </div>
 
-<br>
-
 Together: unhealthy pods get restarted **and** stop receiving traffic while recovering.
 
 ---
@@ -407,6 +454,12 @@ Zero-downtime deployments
 
 ---
 
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
+
 # How rolling updates work
 
 ```yaml
@@ -417,25 +470,23 @@ strategy:
     maxUnavailable: 0  # never go below desired count
 ```
 
-<br>
-
 ```mermaid
 graph LR
-    subgraph Step 1
+    subgraph Step 1 - Before
         A1[v1] --- A2[v1] --- A3[v1] --- A4[v1] --- A5[v1]
     end
 ```
 
 ```mermaid
 graph LR
-    subgraph Step 2
+    subgraph Step 2 - Surge
         B1[v1] --- B2[v1] --- B3[v1] --- B4[v1] --- B5[v1] --- B6[v2]
     end
 ```
 
 ```mermaid
 graph LR
-    subgraph Step 3
+    subgraph Step 3 - Progress
         C1[v1] --- C2[v1] --- C3[v1] --- C4[v2] --- C5[v2]
     end
 ```
@@ -451,6 +502,12 @@ layout: section
 Scale based on metrics
 
 ---
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # HPA configuration
 
@@ -489,6 +546,12 @@ Data that survives pod restarts
 
 ---
 
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
+
 # PVC: requesting storage
 
 <div class="grid grid-cols-2 gap-8">
@@ -523,7 +586,7 @@ volumes:
 ```
 
 - Pod dies? Data stays in the PVC.
-- Docker Desktop uses `hostPath` provisioner.
+- Docker Desktop uses hostPath provisioner.
 - Production uses cloud volumes (EBS, PD, etc.).
 
 </div>
@@ -538,6 +601,13 @@ layout: section
 ClusterIP vs LoadBalancer
 
 ---
+
+<style>
+h1 { font-size: 1.6em !important; }
+h3 { font-size: 1.0em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # Choosing the right Service type
 
@@ -575,8 +645,6 @@ Gets an **external IP** (localhost on Docker Desktop).
 </div>
 </div>
 
-<br>
-
 **Rule of thumb:** use the narrowest access possible.
 Backing services (databases, caches) should be ClusterIP.
 
@@ -590,6 +658,12 @@ Names, not IPs
 
 ---
 
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
+
 # How services find each other
 
 ```
@@ -597,8 +671,6 @@ redis
   -> redis.default.svc.cluster.local
   -> 10.96.0.15 (ClusterIP)
 ```
-
-<br>
 
 In our ConfigMap:
 
@@ -610,7 +682,7 @@ data:
 
 - CoreDNS resolves service names automatically
 - Short name `redis` works within the same namespace
-- Full form: `<service>.<namespace>.svc.cluster.local`
+- Full form: `SERVICE.NAMESPACE.svc.cluster.local`
 - No hardcoded IPs anywhere in the application code
 
 ---
@@ -622,6 +694,13 @@ layout: section
 Different scaling strategies
 
 ---
+
+<style>
+h1 { font-size: 1.6em !important; }
+h3 { font-size: 1.0em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # Two deployment strategies
 
@@ -662,8 +741,6 @@ strategy:
 </div>
 </div>
 
-<br>
-
 Stateless apps scale horizontally. Stateful apps need careful handling.
 
 ---
@@ -676,18 +753,28 @@ Why Redis is in the picture
 
 ---
 
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+</style>
+
 # The problem with in-memory state
 
 ```mermaid
 graph TB
-    LB[Service / Load Balancer] --> P1[Pod 1<br>visits: 3]
-    LB --> P2[Pod 2<br>visits: 7]
-    LB --> P3[Pod 3<br>visits: 1]
+    LB[Service / Load Balancer] --> P1[Pod 1\nvisits: 3]
+    LB --> P2[Pod 2\nvisits: 7]
+    LB --> P3[Pod 3\nvisits: 1]
 ```
 
 Three pods, three different visit counts. Pod dies? Count lost.
 
 ---
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+</style>
 
 # Redis as shared state
 
@@ -696,7 +783,7 @@ graph TB
     LB[Service / Load Balancer] --> P1[Pod 1]
     LB --> P2[Pod 2]
     LB --> P3[Pod 3]
-    P1 --> R[Redis<br>visits: 11<br>sessions, kv store]
+    P1 --> R[Redis\nvisits: 11\nsessions, kv store]
     P2 --> R
     P3 --> R
 ```
@@ -715,6 +802,12 @@ layout: section
 Fast builds through layer order
 
 ---
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li, td, th { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # Layer order matters
 
@@ -737,8 +830,6 @@ CMD ["uv", "run", "uvicorn", "fastapi_k8s:app",
      "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-<br>
-
 | Change | Layers rebuilt |
 |--------|--------------|
 | Code change | Last 2 layers only (~2-3s) |
@@ -746,26 +837,29 @@ CMD ["uv", "run", "uvicorn", "fastapi_k8s:app",
 | Base image change | Everything |
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+</style>
 
 # Full architecture
 
 ```mermaid
 graph TB
-    User[Browser / curl] --> SVC_API[Service: fastapi-k8s<br>LoadBalancer :80]
+    User[Browser / curl] --> SVC_API[Service: fastapi-k8s\nLoadBalancer :80]
 
     subgraph Kubernetes Cluster
-        SVC_API --> P1[Pod 1<br>FastAPI :8000]
-        SVC_API --> P2[Pod 2<br>FastAPI :8000]
-        SVC_API --> P3[Pod 3<br>FastAPI :8000]
+        SVC_API --> P1[Pod 1\nFastAPI :8000]
+        SVC_API --> P2[Pod 2\nFastAPI :8000]
+        SVC_API --> P3[Pod 3\nFastAPI :8000]
 
-        P1 --> SVC_REDIS[Service: redis<br>ClusterIP :6379]
+        P1 --> SVC_REDIS[Service: redis\nClusterIP :6379]
         P2 --> SVC_REDIS
         P3 --> SVC_REDIS
 
         SVC_REDIS --> R[Pod: Redis]
-        R --> PVC[PVC: redis-pvc<br>100Mi]
+        R --> PVC[PVC: redis-pvc\n100Mi]
     end
 
     CM[ConfigMap: fastapi-config] -.-> P1
@@ -776,8 +870,11 @@ graph TB
 ```
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+td, th { font-size: 0.8em !important; }
+</style>
 
 # What we built
 
@@ -794,8 +891,11 @@ layout: default
 | **Dockerfile** | Multi-stage build with layer caching |
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+td, th { font-size: 0.8em !important; }
+</style>
 
 # Key commands
 
@@ -813,8 +913,11 @@ layout: default
 | `kubectl rollout undo` | Rollback to previous version |
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+pre { font-size: 0.7em !important; }
+</style>
 
 # Useful kubectl commands
 
@@ -826,13 +929,13 @@ kubectl get all
 kubectl get pods -w
 
 # Describe a resource (events, conditions, config)
-kubectl describe pod <pod-name>
+kubectl describe pod MY_POD
 
 # Exec into a running pod
-kubectl exec -it <pod-name> -- sh
+kubectl exec -it MY_POD -- sh
 
 # View logs (follow mode)
-kubectl logs -f <pod-name>
+kubectl logs -f MY_POD
 
 # Check resource usage (requires metrics-server)
 kubectl top pods
@@ -842,8 +945,12 @@ kubectl rollout history deployment/fastapi-k8s
 ```
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # The Downward API
 
@@ -872,8 +979,11 @@ env:
 The `/info` endpoint exposes all of these. Useful for debugging which pod handled a request.
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+td, th { font-size: 0.8em !important; }
+</style>
 
 # API endpoints
 
@@ -888,13 +998,17 @@ layout: default
 | `GET /info` | Pod metadata (Downward API) |
 | `GET /config` | Current ConfigMap values |
 | `GET /visits` | Shared visit counter (Redis) |
-| `POST /kv/{key}` | Store key-value in Redis |
+| `POST /kv/mykey` | Store key-value in Redis |
 | `POST /login` | Session-based auth (Redis-backed) |
 | `GET /me` | Current user + hostname |
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.7em !important; }
+</style>
 
 # Experimenting with the cluster
 
@@ -923,12 +1037,14 @@ make hpa-status  # watch replicas increase
 ```
 
 ---
-layout: default
----
+
+<style>
+h1 { font-size: 1.6em !important; }
+p, li { font-size: 0.85em !important; }
+pre { font-size: 0.75em !important; }
+</style>
 
 # Recap: mental model
-
-<br>
 
 ```
 You write YAML (desired state)
@@ -936,11 +1052,9 @@ You write YAML (desired state)
     -> Controllers reconcile actual state to match
       -> Pods run your containers
         -> Services route traffic to healthy pods
-          -> Probes tell K8s what's healthy
+          -> Probes tell K8s what is healthy
             -> HPA adjusts scale based on load
 ```
-
-<br>
 
 Everything is:
 
@@ -954,7 +1068,5 @@ class: text-center
 ---
 
 # Questions?
-
-<br>
 
 `make docs` to browse the full guide locally
