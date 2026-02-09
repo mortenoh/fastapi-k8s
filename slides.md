@@ -45,32 +45,13 @@ Each layer adds one capability: scaling, updates, stable networking.
 
 ---
 
-# 15 things worth knowing (1/2)
+# Five concepts that make Kubernetes click
 
-| Nr | Takeaway | Concept |
-|----|----------|---------|
-| 1 | Declarative, not imperative | Desired state in YAML |
-| 2 | Pods, not containers | Smallest deployable unit |
-| 3 | Deployment &rarr; ReplicaSet &rarr; Pod | Three-layer hierarchy |
-| 4 | Services give stable networking | DNS name + load balancing |
-| 5 | ConfigMaps and Secrets | Config separated from code |
-| 6 | Requests and limits | Scheduling + QoS classes |
-| 7 | Liveness and readiness probes | Self-healing |
-| 8 | Rolling updates | Zero-downtime deploys |
-
----
-
-# 15 things worth knowing (2/2)
-
-| Nr | Takeaway | Concept |
-|----|----------|---------|
-| 9 | HPA autoscales on metrics | CPU-driven replica count |
-| 10 | PVCs decouple storage | Data survives restarts |
-| 11 | ClusterIP vs LoadBalancer | Internal vs external access |
-| 12 | DNS service discovery | Names, not IPs |
-| 13 | Stateless scales; stateful doesn't | RollingUpdate vs Recreate |
-| 14 | Shared state needs an external store | Redis for sessions, counters |
-| 15 | Docker layer caching | Fast builds via layer order |
+- **Declarative desired state** -- you write YAML describing what you want (replicas, images, ports); Kubernetes continuously reconciles the cluster to match
+- **Pods, Services, Deployments** -- pods run containers, Services give them stable DNS names, Deployments manage rolling updates and scaling
+- **Self-healing through probes** -- liveness probes restart crashed containers, readiness probes remove unhealthy pods from traffic, and failed pods are automatically replaced
+- **Config and storage are separate resources** -- ConfigMaps and Secrets inject environment variables without rebuilding images; PersistentVolumeClaims keep data alive across pod restarts
+- **Stateless scales freely, stateful needs care** -- stateless apps get more replicas; stateful services like Redis need single-replica strategies and external stores for shared state
 
 ---
 layout: section
