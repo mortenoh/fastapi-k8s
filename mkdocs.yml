@@ -1,0 +1,81 @@
+site_name: fastapi-k8s
+site_description: A simple FastAPI app deployed to Kubernetes using Docker Desktop
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Kubernetes Guide:
+      - What is Kubernetes?: kubernetes/what-is-kubernetes.md
+      - Core Concepts: kubernetes/core-concepts.md
+      - Your First Deployment: kubernetes/first-deployment.md
+      - Deploying & Verifying: kubernetes/deploying-and-verifying.md
+      - Scaling: kubernetes/scaling.md
+      - Self-Healing: kubernetes/self-healing.md
+      - Rolling Updates: kubernetes/rolling-updates.md
+      - Resource Management: kubernetes/resource-management.md
+      - Monitoring & Observability: kubernetes/monitoring.md
+      - Networking Deep Dive: kubernetes/networking.md
+      - Configuration & Secrets: kubernetes/configuration-and-secrets.md
+      - Persistent Storage: kubernetes/persistent-storage.md
+      - Horizontal Pod Autoscaler: kubernetes/hpa.md
+      - Features Overview: kubernetes/features.md
+      - Common Troubleshooting: kubernetes/troubleshooting.md
+      - Where to Go Next: kubernetes/next-steps.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - meta
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+plugins:
+  - search

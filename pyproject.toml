@@ -7,3 +7,33 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.128.5",
 ]
+
+[dependency-groups]
+dev = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.7.1",
+    "ruff>=0.11.0",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+select = ["E", "W", "F", "I", "D"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D"]
+"main.py" = ["D100", "D103"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+docstring-code-format = true
+docstring-code-line-length = "dynamic"

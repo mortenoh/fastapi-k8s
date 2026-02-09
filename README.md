@@ -8,107 +8,58 @@ A simple FastAPI app deployed to Kubernetes using Docker Desktop.
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) with Kubernetes enabled
 
-### Enabling Kubernetes in Docker Desktop
-
-1. Open Docker Desktop
-2. Go to **Settings** > **Kubernetes**
-3. Check **Enable Kubernetes**
-4. Click **Apply & Restart**
-
-This gives you a single-node Kubernetes cluster, `kubectl` CLI, local Docker images available to K8s (no registry needed), and a built-in LoadBalancer that maps to localhost.
-
-## Quick Start (Local Development)
+## Quick Start
 
 ```bash
 # Install dependencies
 uv sync
 
-# Run with hot-reload
+# Local dev server with hot-reload
 make dev
 
-# Test it
-curl http://127.0.0.1:8000
-# {"message":"Hello from fastapi-k8s!"}
+# Build, deploy to K8s, and test all endpoints
+make test
 ```
 
-## Docker
+## Documentation
+
+Full documentation (API reference, Kubernetes guide, walkthroughs) is available via MkDocs:
 
 ```bash
-# Build the image
-make docker-build
-
-# Run the container
-make docker-run
-
-# Test it
-curl http://localhost:8000
-# {"message":"Hello from fastapi-k8s!"}
+make docs
 ```
 
-## Kubernetes Deployment
+This serves the docs locally at `http://127.0.0.1:8000`.
 
-```bash
-# 1. Build the Docker image (K8s uses the local image)
-make docker-build
+## API Endpoints
 
-# 2. Deploy to Kubernetes
-make deploy
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Hello message with pod hostname |
+| `/health` | GET | Liveness probe (always 200) |
+| `/ready` | GET | Readiness probe (200 or 503) |
+| `/ready/enable` | POST | Mark pod as ready |
+| `/ready/disable` | POST | Mark pod as not ready |
+| `/crash` | POST | Kill the pod (demonstrates self-healing) |
+| `/stress?seconds=10` | GET | Burn CPU (demonstrates HPA, capped by ConfigMap) |
+| `/info` | GET | Pod metadata via Downward API |
+| `/config` | GET | Current ConfigMap values |
+| `/version` | GET | App version and server hostname |
 
-# 3. Check status (wait for STATUS: Running)
-make status
+## Key Make Targets
 
-# 4. Test it (the LoadBalancer maps port 80 to localhost)
-curl http://localhost
-# {"message":"Hello from fastapi-k8s!","server":"fastapi-k8s-7f8b9c6d4-xj2kl"}
-```
+| Target | Description |
+|--------|-------------|
+| `make dev` | Local dev server with hot-reload |
+| `make docker-build` | Build Docker image |
+| `make deploy` | Deploy to Kubernetes |
+| `make test` | Build, deploy, and test all endpoints |
+| `make status` | Check pod and service status |
+| `make scale N=3` | Scale deployment to N replicas |
+| `make restart` | Trigger rolling restart |
+| `make hpa` | Apply HPA for autoscaling |
+| `make metrics-server` | Install metrics-server for HPA and kubectl top |
+| `make docs` | Serve documentation locally |
+| `make undeploy` | Remove from Kubernetes |
 
-## Makefile Reference
-
-| Target | Command | Description |
-|--------|---------|-------------|
-| `make dev` | `uv run fastapi dev main.py` | Local dev server with hot-reload |
-| `make run` | `uv run main.py` | Run with uvicorn directly |
-| `make docker-build` | `docker build -t fastapi-k8s:latest .` | Build Docker image |
-| `make docker-run` | `docker run --rm -p 8000:8000 fastapi-k8s:latest` | Run Docker container |
-| `make deploy` | `kubectl apply -f k8s.yaml` | Deploy to Kubernetes |
-| `make status` | `kubectl get pods,svc -l app=fastapi-k8s` | Check pod and service status |
-| `make logs` | `kubectl logs -l app=fastapi-k8s` | View pod logs |
-| `make scale N=3` | `kubectl scale deployment ... --replicas=3` | Scale deployment to N replicas |
-| `make undeploy` | `kubectl delete -f k8s.yaml` | Remove from Kubernetes |
-| `make clean` | undeploy + `docker rmi` | Remove K8s resources and Docker image |
-
-## Learning Kubernetes
-
-New to Kubernetes? See **[KUBERNETES.md](KUBERNETES.md)** for a comprehensive guide using this project as the running example — covers core concepts, scaling, self-healing, rolling updates, and more.
-
-## Cleanup
-
-```bash
-# Remove from Kubernetes
-make undeploy
-
-# Remove everything (K8s resources + Docker image)
-make clean
-```
-
-## Useful kubectl Commands
-
-```bash
-# List all pods
-kubectl get pods
-
-# Describe a pod (shows events, useful for debugging)
-kubectl describe pod -l app=fastapi-k8s
-
-# Follow logs in real-time
-kubectl logs -l app=fastapi-k8s -f
-
-# Get a shell inside the running container
-kubectl exec -it $(kubectl get pod -l app=fastapi-k8s -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
-
-# Check all services
-kubectl get svc
-
-# View the full deployment config
-kubectl get deployment fastapi-k8s -o yaml
-```
+Run `make` with no arguments to see all available targets.
