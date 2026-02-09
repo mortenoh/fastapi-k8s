@@ -35,8 +35,13 @@ scale: ## Scale deployment (usage: make scale N=3)
 undeploy: ## Remove from Kubernetes
 	kubectl delete -f k8s.yaml
 
-clean: undeploy ## Remove K8s resources and Docker image
-	docker rmi fastapi-k8s:latest
+clean: ## Remove all K8s resources and Docker image
+	-@kubectl delete -f k8s/hpa.yaml 2>/dev/null && echo "Deleted HPA" || true
+	-@kubectl delete -f k8s.yaml 2>/dev/null && echo "Deleted app" || true
+	-@kubectl delete -f k8s/redis.yaml 2>/dev/null && echo "Deleted Redis" || true
+	-@kubectl delete -f k8s/redis-secret.yaml 2>/dev/null && echo "Deleted Redis secret" || true
+	-@kubectl delete pvc redis-pvc 2>/dev/null && echo "Deleted Redis PVC" || true
+	-@docker rmi fastapi-k8s:latest 2>/dev/null && echo "Deleted Docker image" || true
 
 metrics-server: ## Install metrics-server for HPA and kubectl top
 	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
