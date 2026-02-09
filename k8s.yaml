@@ -8,6 +8,8 @@ data:
   APP_NAME: "fastapi-k8s"
   LOG_LEVEL: "info"
   MAX_STRESS_SECONDS: "30"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -91,6 +93,12 @@ spec:
               valueFrom:
                 resourceFieldRef:
                   resource: limits.memory
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASSWORD
+                  optional: true
 ---
 apiVersion: v1
 kind: Service
