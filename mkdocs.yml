@@ -29,7 +29,6 @@ theme:
 nav:
   - Home: index.md
   - Kubernetes Guide:
-      - Live Demo: index.md#live-demo-walkthrough
       - What We Learned: kubernetes/what-we-learned.md
       - What is Kubernetes?: kubernetes/what-is-kubernetes.md
       - Core Concepts: kubernetes/core-concepts.md
