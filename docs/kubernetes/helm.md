@@ -6,6 +6,9 @@ Helm is the package manager for Kubernetes. It fills the same role that `apt` fi
 
 This page starts with what Helm solves, walks through using existing charts (the way most people start), and then builds a chart from scratch for our fastapi-k8s project.
 
+!!! info "Project chart"
+    This project includes a ready-to-use Helm chart at `helm/`. It packages the FastAPI app, ConfigMap, Service, optional Redis, and optional HPA into a single parameterized release. See [Using the project chart](#using-the-project-chart) for quick-start commands.
+
 ## Why Helm
 
 Consider our current project. We have three separate YAML files with hardcoded values:
@@ -362,30 +365,34 @@ helm dependency update
 
 ## Creating a Chart for fastapi-k8s
 
-This section walks through converting our raw YAML into a Helm chart. The goal is to produce a single chart that replaces `k8s.yaml` (ConfigMap, Deployment, Service) with templatized versions where environment-specific values are configurable.
+This section walks through converting our raw YAML into a Helm chart. The goal is to produce a single chart that replaces `k8s.yaml`, `k8s/redis.yaml`, `k8s/redis-secret.yaml`, and `k8s/hpa.yaml` with templatized versions where environment-specific values are configurable.
 
-### Scaffolding
+The project chart lives at `helm/` in the repository root. It contains:
 
-Start by creating the chart and removing the default templates we do not need.
-
-```bash
-# Create the chart scaffold
-helm create fastapi-k8s-chart
-
-# Remove templates we will replace with our own
-rm fastapi-k8s-chart/templates/ingress.yaml
-rm fastapi-k8s-chart/templates/serviceaccount.yaml
-rm fastapi-k8s-chart/templates/hpa.yaml
-rm -rf fastapi-k8s-chart/templates/tests
+```
+helm/
+  Chart.yaml            # Chart metadata (name, version, description)
+  values.yaml           # Default configuration values
+  templates/
+    _helpers.tpl         # Reusable template snippets
+    configmap.yaml       # App ConfigMap
+    deployment.yaml      # App Deployment
+    service.yaml         # App Service (LoadBalancer)
+    hpa.yaml             # HPA (optional, off by default)
+    redis-secret.yaml    # Redis Secret (optional, on by default)
+    redis-pvc.yaml       # Redis PVC (optional)
+    redis-deployment.yaml # Redis Deployment (optional)
+    redis-service.yaml   # Redis ClusterIP Service (optional)
+    NOTES.txt            # Post-install instructions
 ```
 
 ### Chart.yaml
 
-Replace the generated `Chart.yaml` with our project metadata.
+The `Chart.yaml` contains our project metadata.
 
 ```yaml
 apiVersion: v2
-name: fastapi-k8s-chart
+name: fastapi-k8s
 description: FastAPI app deployed to Kubernetes
 type: application
 version: 0.1.0
@@ -394,7 +401,7 @@ appVersion: "1.0.0"
 
 ### values.yaml
 
-Extract every configurable value from `k8s.yaml` into `values.yaml`. This is the file users edit to customize the deployment.
+Every configurable value is extracted into `values.yaml`. This is the file users edit to customize the deployment.
 
 ```yaml
 replicaCount: 5
@@ -421,8 +428,6 @@ config:
   appName: "fastapi-k8s"
   logLevel: "info"
   maxStressSeconds: "30"
-  redisHost: "redis"
-  redisPort: "6379"
 
 strategy:
   type: RollingUpdate
@@ -439,25 +444,52 @@ probes:
     path: /ready
     initialDelaySeconds: 2
     periodSeconds: 5
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilization: 50
+
+redis:
+  enabled: true
+  password: "redis-learning-pwd-123"
+  image:
+    repository: redis
+    tag: 7-alpine
+  port: 6379
+  persistence:
+    size: 100Mi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
 ```
+
+Redis resources are controlled by `redis.enabled` (default `true`). The HPA is controlled by `autoscaling.enabled` (default `false`). When `autoscaling.enabled` is `true`, the `replicaCount` field is ignored since the HPA manages replica count.
 
 ### templates/configmap.yaml
 
-Our ConfigMap template replaces hardcoded values with references to `.Values.config`.
+Our ConfigMap template replaces hardcoded values with references to `.Values.config`. When Redis is enabled, `REDIS_HOST` is dynamically set to the Helm-named Redis service.
 
 ```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "fastapi-k8s-chart.fullname" . }}-config
+  name: {{ include "fastapi-k8s.fullname" . }}-config
   labels:
-    {{- include "fastapi-k8s-chart.labels" . | nindent 4 }}
+    {{- include "fastapi-k8s.labels" . | nindent 4 }}
 data:
   APP_NAME: {{ .Values.config.appName | quote }}
   LOG_LEVEL: {{ .Values.config.logLevel | quote }}
   MAX_STRESS_SECONDS: {{ .Values.config.maxStressSeconds | quote }}
-  REDIS_HOST: {{ .Values.config.redisHost | quote }}
-  REDIS_PORT: {{ .Values.config.redisPort | quote }}
+  {{- if .Values.redis.enabled }}
+  REDIS_HOST: {{ include "fastapi-k8s.redisFullname" . | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}
+  {{- end }}
 ```
 
 ### templates/deployment.yaml
@@ -468,20 +500,27 @@ The Deployment template is the most complex, covering replicas, image, resources
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "fastapi-k8s-chart.fullname" . }}
+  name: {{ include "fastapi-k8s.fullname" . }}
   labels:
-    {{- include "fastapi-k8s-chart.labels" . | nindent 4 }}
+    {{- include "fastapi-k8s.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   strategy:
-    {{- toYaml .Values.strategy | nindent 4 }}
+    type: {{ .Values.strategy.type }}
+    {{- if eq .Values.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+    {{- end }}
   selector:
     matchLabels:
-      {{- include "fastapi-k8s-chart.selectorLabels" . | nindent 6 }}
+      {{- include "fastapi-k8s.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "fastapi-k8s-chart.selectorLabels" . | nindent 8 }}
+        {{- include "fastapi-k8s.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -505,7 +544,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           envFrom:
             - configMapRef:
-                name: {{ include "fastapi-k8s-chart.fullname" . }}-config
+                name: {{ include "fastapi-k8s.fullname" . }}-config
           env:
             - name: POD_NAME
               valueFrom:
@@ -523,9 +562,17 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            # ... resource field refs for CPU_REQUEST, CPU_LIMIT, etc.
+            {{- if .Values.redis.enabled }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fastapi-k8s.redisFullname" . }}-secret
+                  key: REDIS_PASSWORD
+            {{- end }}
 ```
 
-Notice how `{{ .Values.replicaCount }}`, `{{ .Values.image.repository }}`, and `{{ toYaml .Values.resources }}` replace the hardcoded values from our original `k8s.yaml`. The Downward API environment variables remain static because they reference pod metadata, not configurable values.
+Notice how `{{ .Values.replicaCount }}`, `{{ .Values.image.repository }}`, and `{{ toYaml .Values.resources }}` replace the hardcoded values from our original `k8s.yaml`. The Downward API environment variables remain static because they reference pod metadata, not configurable values. The `REDIS_PASSWORD` env var is conditionally included only when `redis.enabled` is `true`.
 
 ### templates/service.yaml
 
@@ -535,28 +582,63 @@ The Service template is straightforward.
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "fastapi-k8s-chart.fullname" . }}
+  name: {{ include "fastapi-k8s.fullname" . }}
   labels:
-    {{- include "fastapi-k8s-chart.labels" . | nindent 4 }}
+    {{- include "fastapi-k8s.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
   selector:
-    {{- include "fastapi-k8s-chart.selectorLabels" . | nindent 4 }}
+    {{- include "fastapi-k8s.selectorLabels" . | nindent 4 }}
 ```
 
-### Installing the chart
+### Conditional templates
 
-With the templates in place, install the chart and verify it works.
+The HPA and Redis templates are wrapped in conditionals so they only render when enabled:
+
+```yaml
+# templates/hpa.yaml
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+# ...
+{{- end }}
+```
+
+```yaml
+# templates/redis-deployment.yaml (and redis-secret, redis-pvc, redis-service)
+{{- if .Values.redis.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+# ...
+{{- end }}
+```
+
+This keeps the chart flexible: `helm template fastapi-k8s ./helm --set redis.enabled=false` produces zero Redis resources, while `--set autoscaling.enabled=true` adds the HPA.
+
+### Using the project chart
+
+With the chart in place, deploy using Make targets or Helm directly.
 
 ```bash
 # Install the chart with default values
-helm install fastapi-k8s ./fastapi-k8s-chart
+make helm-install
+# or: helm install fastapi-k8s ./helm
+
+# Upgrade (or install if not present)
+make helm-upgrade
+# or: helm upgrade --install fastapi-k8s ./helm
 
 # Verify the release
-helm status fastapi-k8s
+make helm-status
+
+# Render templates locally without installing (dry-run)
+make helm-template
+
+# Uninstall
+make helm-uninstall
 
 # Check that all resources were created
 kubectl get configmap,deployment,service -l app.kubernetes.io/instance=fastapi-k8s
@@ -568,10 +650,16 @@ The power of Helm becomes clear when you need different configurations for diffe
 
 ```bash
 # Scale up from the command line
-helm upgrade fastapi-k8s ./fastapi-k8s-chart --set replicaCount=3
+helm upgrade fastapi-k8s ./helm --set replicaCount=3
+
+# Deploy without Redis
+helm upgrade fastapi-k8s ./helm --set redis.enabled=false
+
+# Enable HPA
+helm upgrade fastapi-k8s ./helm --set autoscaling.enabled=true
 
 # Use an environment-specific values file
-helm upgrade fastapi-k8s ./fastapi-k8s-chart -f values-dev.yaml
+helm upgrade fastapi-k8s ./helm -f values-dev.yaml
 ```
 
 A `values-dev.yaml` for local development might look like:
@@ -608,7 +696,7 @@ Helm applies values in a specific precedence order. Later sources override earli
 # 1. Chart defaults (values.yaml in the chart)
 # 2. values-prod.yaml overrides
 # 3. --set override (highest priority)
-helm install fastapi-k8s ./fastapi-k8s-chart \
+helm install fastapi-k8s ./helm \
   -f values-prod.yaml \
   --set replicaCount=10
 ```
@@ -645,9 +733,9 @@ config:
 
 ```bash
 # Deploy to each environment
-helm upgrade --install fastapi-k8s ./fastapi-k8s-chart -f values-dev.yaml
-helm upgrade --install fastapi-k8s ./fastapi-k8s-chart -f values-staging.yaml
-helm upgrade --install fastapi-k8s ./fastapi-k8s-chart -f values-prod.yaml
+helm upgrade --install fastapi-k8s ./helm -f values-dev.yaml
+helm upgrade --install fastapi-k8s ./helm -f values-staging.yaml
+helm upgrade --install fastapi-k8s ./helm -f values-prod.yaml
 ```
 
 ## Helm Lifecycle Commands
@@ -684,13 +772,13 @@ The `helm template` command renders templates without contacting the cluster. Th
 
 ```bash
 # Render all templates with default values
-helm template fastapi-k8s ./fastapi-k8s-chart
+helm template fastapi-k8s ./helm
 
 # Render with specific value overrides
-helm template fastapi-k8s ./fastapi-k8s-chart --set replicaCount=3
+helm template fastapi-k8s ./helm --set replicaCount=3
 
 # Render a single template file
-helm template fastapi-k8s ./fastapi-k8s-chart -s templates/deployment.yaml
+helm template fastapi-k8s ./helm -s templates/deployment.yaml
 ```
 
 ### Linting
@@ -698,7 +786,7 @@ helm template fastapi-k8s ./fastapi-k8s-chart -s templates/deployment.yaml
 The `helm lint` command checks a chart for common issues: missing required fields, malformed templates, and best-practice violations.
 
 ```bash
-helm lint ./fastapi-k8s-chart
+helm lint ./helm
 ```
 
 ### Dry-run install
@@ -706,7 +794,7 @@ helm lint ./fastapi-k8s-chart
 A dry-run sends the rendered templates to the cluster for server-side validation without actually creating resources.
 
 ```bash
-helm install fastapi-k8s ./fastapi-k8s-chart --dry-run
+helm install fastapi-k8s ./helm --dry-run
 ```
 
 This catches errors that `helm template` alone cannot, such as invalid API versions, schema violations, and admission webhook rejections.
@@ -769,6 +857,6 @@ See [Where to Go Next](next-steps.md) for more on Kustomize and the broader pack
 
 Helm bridges the gap between simple YAML files and production-grade deployment management. It gives you parameterization, versioning, rollback, and access to a large ecosystem of community charts -- all without leaving the command line.
 
-For our fastapi-k8s project, raw YAML remains the right choice: it is simple, transparent, and ideal for learning Kubernetes concepts hands-on. But the chart we built in this page shows how little effort it takes to convert raw YAML into a reusable, configurable package. When the time comes to deploy to multiple environments or distribute the application to others, the path from here to Helm is short.
+Our fastapi-k8s project includes both approaches: raw YAML for transparency and learning, and a Helm chart at `helm/` that packages everything (app, Redis, HPA) into a single parameterized release. Use `make helm-install` to deploy with Helm, or continue using `make deploy` with raw YAML. Either way, the path between the two is short.
 
 See [Features Overview](features.md) for a broad map of Kubernetes capabilities, [Configuration & Secrets](configuration-and-secrets.md) for the configuration patterns that Helm builds on, or [Where to Go Next](next-steps.md) for the broader landscape of tools and platforms.

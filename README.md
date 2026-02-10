@@ -68,6 +68,11 @@ This serves the docs locally at `http://127.0.0.1:8000`.
 | `make redis-status` | Check Redis pod, service, and PVC status |
 | `make test-redis` | Test Redis endpoints |
 | `make redis-clean` | Full Redis cleanup |
+| `make helm-install` | Install Helm chart |
+| `make helm-upgrade` | Upgrade (or install) Helm release |
+| `make helm-uninstall` | Uninstall Helm release |
+| `make helm-status` | Show Helm release status |
+| `make helm-template` | Render chart templates locally (dry-run) |
 | `make undeploy` | Remove from Kubernetes |
 
 Run `make` with no arguments to see all available targets.
