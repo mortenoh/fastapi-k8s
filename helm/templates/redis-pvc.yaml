@@ -1,0 +1,14 @@
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fastapi-k8s.redisFullname" . }}-pvc
+  labels:
+    {{- include "fastapi-k8s.redisLabels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistence.size }}
+{{- end }}

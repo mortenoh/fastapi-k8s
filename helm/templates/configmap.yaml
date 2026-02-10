@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fastapi-k8s.fullname" . }}-config
+  labels:
+    {{- include "fastapi-k8s.labels" . | nindent 4 }}
+data:
+  APP_NAME: {{ .Values.config.appName | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  MAX_STRESS_SECONDS: {{ .Values.config.maxStressSeconds | quote }}
+  {{- if .Values.redis.enabled }}
+  REDIS_HOST: {{ include "fastapi-k8s.redisFullname" . | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}
+  {{- end }}

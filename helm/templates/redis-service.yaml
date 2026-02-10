@@ -1,0 +1,15 @@
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fastapi-k8s.redisFullname" . }}
+  labels:
+    {{- include "fastapi-k8s.redisLabels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.redis.port }}
+      targetPort: {{ .Values.redis.port }}
+  selector:
+    {{- include "fastapi-k8s.redisSelectorLabels" . | nindent 4 }}
+{{- end }}

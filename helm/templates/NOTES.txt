@@ -1,0 +1,19 @@
+fastapi-k8s has been deployed.
+
+To check the status:
+  kubectl get pods,svc -l app.kubernetes.io/instance={{ .Release.Name }}
+
+To access the app:
+  curl http://localhost/
+
+{{- if .Values.redis.enabled }}
+
+Redis is enabled. To check Redis status:
+  kubectl get pods,svc -l app.kubernetes.io/name=redis,app.kubernetes.io/instance={{ .Release.Name }}
+{{- end }}
+
+{{- if .Values.autoscaling.enabled }}
+
+HPA is enabled ({{ .Values.autoscaling.minReplicas }}-{{ .Values.autoscaling.maxReplicas }} replicas, target CPU {{ .Values.autoscaling.targetCPUUtilization }}%).
+  kubectl get hpa
+{{- end }}

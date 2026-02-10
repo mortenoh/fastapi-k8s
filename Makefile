@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev run lint docker-build docker-run deploy status logs scale undeploy clean test test-e2e metrics-server hpa hpa-status hpa-delete restart rollout-status docs docs-serve docs-build redis-deploy redis-status redis-logs redis-undeploy redis-clean test-redis slides slides-build
+.PHONY: help dev run lint docker-build docker-run deploy status logs scale undeploy clean test test-e2e metrics-server hpa hpa-status hpa-delete restart rollout-status docs docs-serve docs-build redis-deploy redis-status redis-logs redis-undeploy redis-clean test-redis slides slides-build helm-install helm-upgrade helm-uninstall helm-status helm-template
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -133,6 +133,21 @@ test-redis: ## Test Redis endpoints (visits, kv store, shared state)
 	@echo ""
 	@echo ""
 	@echo "=== All Redis tests passed ==="
+
+helm-install: ## Install Helm chart
+	helm install fastapi-k8s ./helm
+
+helm-upgrade: ## Upgrade (or install) Helm release
+	helm upgrade --install fastapi-k8s ./helm
+
+helm-uninstall: ## Uninstall Helm release
+	helm uninstall fastapi-k8s
+
+helm-status: ## Show Helm release status
+	helm status fastapi-k8s
+
+helm-template: ## Render chart templates locally (dry-run)
+	helm template fastapi-k8s ./helm
 
 test: ## Run unit tests with pytest
 	uv run pytest -q
