@@ -96,7 +96,7 @@ helm create fastapi-k8s-chart
 | Best for | Small projects, learning | Multi-environment, team projects |
 
 !!! tip
-    For this project, raw YAML in `k8s.yaml` is perfectly fine. Consider Helm when you need to deploy to multiple environments (dev, staging, prod) or want to share your app as a reusable package.
+    For this project, raw YAML in `k8s.yaml` is perfectly fine. Consider Helm when you need to deploy to multiple environments (dev, staging, prod) or want to share your app as a reusable package. For a complete deep-dive including creating a chart for this project, see [Helm Charts](helm.md).
 
 ---
 

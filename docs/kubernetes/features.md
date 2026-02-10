@@ -1279,7 +1279,7 @@ Use Helm when:
 - You need templating to manage multiple environments (dev, staging, prod)
 - You want versioned, repeatable deployments with rollback support
 
-See [Where to Go Next](next-steps.md) for more on Helm.
+See [Helm Charts](helm.md) for a full walkthrough, or [Where to Go Next](next-steps.md) for the broader landscape.
 
 ### Kustomize
 

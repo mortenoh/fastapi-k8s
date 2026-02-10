@@ -714,6 +714,78 @@ CMD ["uv", "run", "uvicorn", "fastapi_k8s:app",
 | Base image change | Everything |
 
 ---
+layout: section
+---
+
+# 16. Helm Charts
+
+Package manager for Kubernetes
+
+---
+
+# Why Helm
+
+<div class="grid grid-cols-2 gap-8">
+<div>
+
+**The problem with raw YAML:**
+
+- Copy-paste between environments
+- Hardcoded values everywhere
+- No versioning or rollback for a group of resources
+- Installing third-party software means writing lots of YAML
+
+</div>
+<div>
+
+**What Helm provides:**
+
+- **Parameterization** -- one chart, many environments via `values.yaml`
+- **Versioning** -- every chart and release has a version
+- **Rollback** -- `helm rollback` restores the previous state
+- **Ecosystem** -- thousands of community charts (Redis, PostgreSQL, Prometheus)
+
+</div>
+</div>
+
+```bash
+# Install Redis with one command instead of writing 3 YAML files
+helm install redis bitnami/redis --set auth.password=secret
+```
+
+---
+
+# Helm: chart structure
+
+```bash
+helm create fastapi-k8s-chart
+```
+
+```
+fastapi-k8s-chart/
+  Chart.yaml       # metadata (name, version)
+  values.yaml      # default config (replicas, image, resources)
+  templates/       # templatized K8s manifests
+    deployment.yaml
+    service.yaml
+    _helpers.tpl   # reusable template snippets
+```
+
+Templates use Go syntax to inject values:
+
+```yaml
+spec:
+  replicas: {{ .Values.replicaCount }}
+  containers:
+    - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+```
+
+```bash
+helm install fastapi-k8s ./fastapi-k8s-chart --set replicaCount=3
+helm upgrade fastapi-k8s ./fastapi-k8s-chart -f values-prod.yaml
+```
+
+---
 
 # Full architecture
 
@@ -895,6 +967,69 @@ Everything is:
 - **Declarative** -- describe the end state
 - **Self-healing** -- controllers fix drift automatically
 - **Composable** -- small resources combine into complex systems
+
+---
+layout: section
+---
+
+# Live Demo
+
+Step-by-step walkthrough
+
+---
+
+# Live Demo -- Part 1
+
+### Deploy and verify
+
+```bash
+1. make docker-build && make deploy    # build image, apply manifests
+2. make status                         # wait for Running
+3. curl http://localhost               # hello + hostname
+```
+
+### Load balancing
+
+```bash
+4. for i in $(seq 1 10); do curl -s http://localhost | jq -r .server; done
+```
+
+### Scale and self-healing
+
+```bash
+5. make scale N=5 && make status       # 5 replicas running
+6. curl -X POST http://localhost/crash  # kill a pod
+7. kubectl get pods -w                  # watch restart (Ctrl-C to stop)
+```
+
+---
+
+# Live Demo -- Part 2
+
+### Readiness probes
+
+```bash
+8.  curl -X POST http://localhost/ready/disable   # pod fails readiness
+9.  for i in $(seq 1 6); do curl -s http://localhost | jq -r .server; done
+10. curl -X POST http://localhost/ready/enable    # pod rejoins
+```
+
+### Redis shared state
+
+```bash
+11. make redis-deploy && make redis-status        # deploy Redis
+12. for i in $(seq 1 5); do curl -s http://localhost/visits | jq; done
+13. curl -X POST http://localhost/kv/demo -d '{"value":"hello"}' | jq
+14. curl -s http://localhost/kv/demo | jq
+```
+
+### Autoscaling (HPA)
+
+```bash
+15. make hpa && make hpa-status                   # apply autoscaler
+16. curl "http://localhost/stress?seconds=20"      # burn CPU
+17. watch make hpa-status                          # watch replicas grow
+```
 
 ---
 layout: center

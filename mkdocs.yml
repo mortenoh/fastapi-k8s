@@ -29,6 +29,7 @@ theme:
 nav:
   - Home: index.md
   - Kubernetes Guide:
+      - Live Demo: index.md#live-demo-walkthrough
       - What We Learned: kubernetes/what-we-learned.md
       - What is Kubernetes?: kubernetes/what-is-kubernetes.md
       - Core Concepts: kubernetes/core-concepts.md
@@ -45,7 +46,9 @@ nav:
       - Redis Integration: kubernetes/redis.md
       - Dockerfile Walkthrough: kubernetes/dockerfile.md
       - Horizontal Pod Autoscaler: kubernetes/hpa.md
+      - Helm Charts: kubernetes/helm.md
       - Features Overview: kubernetes/features.md
+      - Kubectl Cheatsheet: kubernetes/cheatsheet.md
       - Common Troubleshooting: kubernetes/troubleshooting.md
       - Where to Go Next: kubernetes/next-steps.md
 
