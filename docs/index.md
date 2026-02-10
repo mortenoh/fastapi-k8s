@@ -82,6 +82,133 @@ curl http://localhost
 # {"message":"Hello from fastapi-k8s!","server":"fastapi-k8s-7f8b9c6d4-xj2kl"}
 ```
 
+## Live Demo Walkthrough
+
+A step-by-step script you can run against the cluster. Each step has the command and what to watch for.
+
+### Part 1 -- Deploy, Load Balancing, Scaling, Self-Healing
+
+**Step 1 -- Build and deploy**
+
+```bash
+make docker-build && make deploy
+```
+
+Observe: Kubernetes creates pods, service, and configmap.
+
+**Step 2 -- Wait for pods**
+
+```bash
+make status
+```
+
+Observe: All pods show `STATUS: Running` and `READY: 1/1`.
+
+**Step 3 -- Load balancing**
+
+```bash
+for i in $(seq 1 10); do curl -s http://localhost | jq -r .server; done
+```
+
+Observe: Different hostnames appear -- the Service round-robins across pods.
+
+**Step 4 -- Scale up and self-healing**
+
+```bash
+make scale N=5
+make status
+curl -X POST http://localhost/crash
+kubectl get pods -w
+```
+
+Observe: After the crash, Kubernetes restarts the pod automatically. The restart count increments by 1.
+
+### Part 2 -- Readiness Probes
+
+**Step 5 -- Remove a pod from traffic**
+
+```bash
+curl -X POST http://localhost/ready/disable
+for i in $(seq 1 6); do curl -s http://localhost | jq -r .server; done
+```
+
+Observe: The disabled pod's hostname no longer appears in responses.
+
+**Step 6 -- Re-enable the pod**
+
+```bash
+curl -X POST http://localhost/ready/enable
+for i in $(seq 1 6); do curl -s http://localhost | jq -r .server; done
+```
+
+Observe: The pod's hostname starts appearing again.
+
+### Part 3 -- Redis Shared State
+
+**Step 7 -- Deploy Redis**
+
+```bash
+make redis-deploy
+make redis-status
+```
+
+Observe: Redis pod is `Running`, PVC is `Bound`, ClusterIP service exists.
+
+**Step 8 -- Shared visit counter**
+
+```bash
+for i in $(seq 1 5); do curl -s http://localhost/visits | jq; done
+```
+
+Observe: The visit count increments consistently regardless of which pod handles the request.
+
+**Step 9 -- Key-value store**
+
+```bash
+curl -X POST http://localhost/kv/demo -d '{"value":"hello"}' | jq
+curl -s http://localhost/kv/demo | jq
+```
+
+Observe: Any pod can read the value written by any other pod.
+
+### Part 4 -- Autoscaling / HPA
+
+**Step 10 -- Install metrics-server (if not already installed)**
+
+```bash
+make metrics-server
+```
+
+Observe: metrics-server pod starts in `kube-system` namespace.
+
+**Step 11 -- Apply HPA**
+
+```bash
+make hpa
+make hpa-status
+```
+
+Observe: HPA shows current CPU utilization and target of 50%.
+
+**Step 12 -- Trigger autoscaling**
+
+```bash
+curl "http://localhost/stress?seconds=20"
+watch make hpa-status
+```
+
+Observe: CPU spikes, replicas increase beyond the initial count. After load stops, replicas scale back down after the cooldown period.
+
+**Step 13 -- Cleanup**
+
+```bash
+make hpa-delete
+make scale N=3
+make redis-undeploy
+```
+
+Observe: HPA removed, replicas set back to 3, Redis stack removed.
+
 ## API Endpoints
 
 | Endpoint | Method | Description |
